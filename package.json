@@ -31,11 +31,11 @@
     "build"
   ],
   "scripts": {
-    "build": "rm -rf ./build && babel src --out-dir build",
+    "build": "babel src --out-dir build",
     "local-proxy": "npm run build && node ./build/run_locally.js",
     "test": "npm run build && cross-env NODE_OPTIONS=--insecure-http-parser mocha --exit --recursive",
     "prepare": "npm run build",
-    "clean": "rm -rf build",
+    "clean": "rd /s /q build",
     "lint": "npm run build && eslint src",
     "lint-fix": "npm run build && eslint src --fix"
   },
