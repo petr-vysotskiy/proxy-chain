@@ -1,4 +1,5 @@
 import http from 'http';
+import tls from 'tls';
 import HandlerBase from './handler_base';
 import { maybeAddProxyAuthorizationHeader } from './tools';
 
@@ -14,10 +15,19 @@ export default class HandlerTunnelChain extends HandlerBase {
         this.bindHandlersToThis(['onTrgRequestConnect', 'onTrgRequestAbort', 'onTrgRequestError']);
     }
 
+    createTlsConnection() {
+        return tls.connect({
+            host: this.upstreamProxyUrlParsed.hostname,
+            port: this.upstreamProxyUrlParsed.port,
+        });
+    }
+
     run() {
         this.log('Connecting to upstream proxy...');
 
         const targetHost = `${this.trgParsed.hostname}:${this.trgParsed.port}`;
+        const createConnection = this.upstreamProxyUrlParsed.scheme === 'https'
+            ? () => this.createTlsConnection() : undefined;
 
         const options = {
             method: 'CONNECT',
@@ -27,6 +37,7 @@ export default class HandlerTunnelChain extends HandlerBase {
             headers: {
                 Host: targetHost,
             },
+            createConnection,
         };
 
         maybeAddProxyAuthorizationHeader(this.upstreamProxyUrlParsed, options.headers);
