@@ -9,8 +9,8 @@ export function createTunnel(proxyUrl, targetHost, providedOptions = {}, callbac
     if (!parsedProxyUrl.hostname || !parsedProxyUrl.port) {
         throw new Error(`The proxy URL must contain hostname and port (was "${proxyUrl}")`);
     }
-    if (!['http', 'https'].includes(parsedProxyUrl.protocol)) {
-        throw new Error(`The proxy URL must have the "http" or "https" protocol (was "${proxyUrl}")`);
+    if (parsedProxyUrl.protocol !== 'http:') {
+        throw new Error(`The proxy URL must have the "http" protocol (was "${proxyUrl}")`);
     }
     if (/:/.test(parsedProxyUrl.username)) {
         throw new Error('The proxy URL username cannot contain the colon (:) character according to RFC 7617.');

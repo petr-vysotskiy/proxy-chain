@@ -114,6 +114,8 @@ export class Server extends EventEmitter {
             httpRequestCount: 0,
             connectRequestCount: 0,
         };
+
+        this.supportedProxySchemes = new Set(['http', 'https']);
     }
 
     log(handlerId, str) {
@@ -312,7 +314,7 @@ export class Server extends EventEmitter {
                     if (!handlerOpts.upstreamProxyUrlParsed.hostname || !handlerOpts.upstreamProxyUrlParsed.port) {
                         throw new Error(`Invalid "upstreamProxyUrl" provided: URL must have hostname and port (was "${funcResult.upstreamProxyUrl}")`); // eslint-disable-line max-len
                     }
-                    if (!['http', 'https'].includes(handlerOpts.upstreamProxyUrlParsed.protocol)) {
+                    if (!this.supportedProxySchemes.has(handlerOpts.upstreamProxyUrlParsed.protocol)) {
                         throw new Error(`Invalid "upstreamProxyUrl" provided: URL must have the "http" or "https" protocol (was "${funcResult.upstreamProxyUrl}")`); // eslint-disable-line max-len
                     }
                     if (/:/.test(handlerOpts.upstreamProxyUrlParsed.username)) {
