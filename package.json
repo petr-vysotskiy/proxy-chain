@@ -35,7 +35,7 @@
     "local-proxy": "npm run build && node ./build/run_locally.js",
     "test": "npm run build && cross-env NODE_OPTIONS=--insecure-http-parser mocha --exit --recursive",
     "prepare": "npm run build",
-    "clean": "rd /s /q build",
+    "clean": "rimraf build",
     "lint": "npm run build && eslint src",
     "lint-fix": "npm run build && eslint src --fix"
   },
@@ -43,6 +43,7 @@
     "node": ">=10"
   },
   "dependencies": {
+    "rimraf": "^3.0.2",
     "underscore": "^1.9.1"
   },
   "devDependencies": {
