@@ -115,7 +115,7 @@ export class Server extends EventEmitter {
             connectRequestCount: 0,
         };
 
-        this.supportedProxySchemes = new Set(['http', 'https']);
+        this.supportedProxySchemes = new Set(['http:', 'https:']);
     }
 
     log(handlerId, str) {
