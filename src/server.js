@@ -253,8 +253,8 @@ export class Server extends EventEmitter {
                     if (!parsed.protocol) {
                         throw new RequestError('Hey, good try, but I\'m a HTTP proxy, not your ordinary web server :)', 400);
                     }
-                    // Only HTTP is supported, other protocols such as HTTP or FTP must use the CONNECT method
-                    if (parsed.protocol !== 'http:') {
+                    // Only HTTP is supported, other protocols such as HTTP (?) or FTP must use the CONNECT method
+                    if (parsed.protocol !== 'http:') { // help
                         throw new RequestError(`Only HTTP protocol is supported (was ${parsed.protocol})`, 400);
                     }
 
