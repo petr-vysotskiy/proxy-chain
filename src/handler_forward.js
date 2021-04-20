@@ -103,27 +103,23 @@ export default class HandlerForward extends HandlerBase {
             // So we need to replicate it here
             reqOpts.path = this.srcRequest.url;
 
-            if (this.upstreamProxyUrlParsed.scheme === 'https') {
-                reqOpts.createConnection = tls.connect({
-                    host: reqOpts.host,
-                    port: reqOpts.port,
-                });
+            reqOpts.createConnection = tls.connect({
+                host: reqOpts.host,
+                port: reqOpts.port,
+            });
 
-                reqOpts.headers = { ...reqOpts.headers, ...this.proxyHeaders };
-                reqOpts.hostname = `${reqOpts.host}:${reqOpts.port}`;
-                let payload = `CONNECT ${reqOpts.hostname} HTTP/1.1\r\n`;
+            reqOpts.headers = { ...reqOpts.headers, ...this.proxyHeaders };
+            const endpointHostname = `${reqOpts.path}:80`;
+            let payload = `CONNECT ${endpointHostname} HTTP/1.1\r\n`;
 
-                reqOpts.headers.Host = reqOpts.hostname;
+            reqOpts.headers.Host = endpointHostname;
 
-                reqOpts.headers.Connection = 'close';
-                for (const name of Object.keys(reqOpts.headers)) {
-                    payload += `${name}: ${reqOpts.headers[name]}\r\n`;
-                }
-
-                reqOpts.createConnection.write(`${payload}\r\n`);
-            } else {
-                maybeAddProxyAuthorizationHeader(this.upstreamProxyUrlParsed, reqOpts.headers);
+            reqOpts.headers.Connection = 'close';
+            for (const name of Object.keys(reqOpts.headers)) {
+                payload += `${name}: ${reqOpts.headers[name]}\r\n`;
             }
+
+            reqOpts.createConnection.write(`${payload}\r\n`);
 
             this.log(`Connecting to upstream proxy ${reqOpts.host}:${reqOpts.port}`);
         } else {
