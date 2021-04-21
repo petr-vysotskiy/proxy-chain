@@ -23,8 +23,8 @@ export default class HandlerForward extends HandlerBase {
         });
 
         const headers = { ...this.proxyHeaders };
-        const [requestHost, requestPort] = this.srcRequest.url.split(':');
-        const requestUrl = `${requestHost}:${requestPort || '80'}`;
+        const [requestScheme, requestHost, requestPort] = this.srcRequest.url.split(':');
+        const requestUrl = `${requestScheme}:${requestHost}:${requestPort || '80'}`;
         let payload = `CONNECT ${requestUrl} HTTP/1.1\r\n`;
 
         headers.Host = requestUrl;
