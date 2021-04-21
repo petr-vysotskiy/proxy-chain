@@ -16,7 +16,7 @@ export default class HandlerForward extends HandlerBase {
         this.bindHandlersToThis(['onTrgResponse', 'onTrgError']);
     }
 
-    async run() {
+    run() {
         const tlsSocket = tls.connect({
             host: this.upstreamProxyUrlParsed.hostname,
             port: this.upstreamProxyUrlParsed.port
@@ -38,8 +38,9 @@ export default class HandlerForward extends HandlerBase {
 
         tlsSocket.write(`${payload}\r\n`);
 
-        const { statusCode } = await proxyResponsePromise;
-        this.forwardRequest(statusCode === 200 && tlsSocket);
+        proxyResponsePromise.then(({ statusCode }) => {
+            this.forwardRequest(statusCode === 200 && tlsSocket);
+        });
     }
 
     parseProxyResponse(socket) {
