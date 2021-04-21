@@ -16,7 +16,7 @@ export default class HandlerForward extends HandlerBase {
         this.bindHandlersToThis(['onTrgResponse', 'onTrgError']);
     }
 
-    run() {
+    async run() {
         const tlsSocket = tls.connect({
             host: this.upstreamProxyUrlParsed.hostname,
             port: this.upstreamProxyUrlParsed.port
@@ -38,7 +38,7 @@ export default class HandlerForward extends HandlerBase {
 
         tlsSocket.write(`${payload}\r\n`);
 
-        const { statusCode } = proxyResponsePromise;
+        const { statusCode } = await proxyResponsePromise;
         this.forwardRequest(statusCode === 200 && tlsSocket);
     }
 
@@ -65,16 +65,16 @@ export default class HandlerForward extends HandlerBase {
             }
 
             function onclose(err) {
-                console.log(('onclose had error %o', err));
+                console.log('onclose had error %o', err);
             }
 
             function onend() {
-                console.log(('onend'));
+                console.log('onend');
             }
 
             function onerror(err) {
                 cleanup();
-                console.log(('onerror %o', err));
+                console.log('onerror %o', err);
                 reject(err);
             }
 
@@ -87,7 +87,7 @@ export default class HandlerForward extends HandlerBase {
 
                 if (endOfHeaders === -1) {
                     // keep buffering
-                    console.log(('have not received end of HTTP headers yet...'));
+                    console.log('have not received end of HTTP headers yet...');
                     read();
                     return;
                 }
@@ -98,7 +98,7 @@ export default class HandlerForward extends HandlerBase {
                     buffered.indexOf('\r\n')
                 );
                 const statusCode = +firstLine.split(' ')[1];
-                console.log(('got proxy server response: %o', firstLine));
+                console.log('got proxy server response: %o', firstLine);
                 resolve({
                     statusCode,
                     buffered
