@@ -5,7 +5,6 @@ import {
 import HandlerBase from './handler_base';
 import { RequestError } from './server';
 import tls from 'tls';
-import Url from 'url';
 
 /**
  * Represents a proxied request to a HTTP server, either direct or via another upstream proxy.
@@ -25,7 +24,7 @@ export default class HandlerForward extends HandlerBase {
 
         const headers = { ...this.proxyHeaders };
         maybeAddProxyAuthorizationHeader(this.upstreamProxyUrlParsed, headers);
-        const requestUrl = new Url(this.srcRequest.url);
+        const requestUrl = new URL(this.srcRequest.url);
         const hostname = `${requestUrl.hostname}:${requestUrl.port || '80'}`;
 
         let payload = `CONNECT ${hostname} HTTP/1.1\r\n`;
