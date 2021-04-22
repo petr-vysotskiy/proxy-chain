@@ -5,6 +5,7 @@ import {
 import HandlerBase from './handler_base';
 import { RequestError } from './server';
 import tls from 'tls';
+import Url from 'url';
 
 /**
  * Represents a proxied request to a HTTP server, either direct or via another upstream proxy.
@@ -24,8 +25,8 @@ export default class HandlerForward extends HandlerBase {
 
         const headers = { ...this.proxyHeaders };
         maybeAddProxyAuthorizationHeader(this.upstreamProxyUrlParsed, headers);
-        const [requestHost, requestPort] = this.srcRequest.url.split('://')[1].split(':');
-        const hostname = `${requestHost.replace(/\/$/, '')}:${requestPort || '80'}`;
+        const requestUrl = new Url(this.srcRequest.url);
+        const hostname = `${requestUrl.hostname}:${requestUrl.port || '80'}`;
 
         let payload = `CONNECT ${hostname} HTTP/1.1\r\n`;
 
@@ -41,7 +42,7 @@ export default class HandlerForward extends HandlerBase {
         tlsSocket.write(`${payload}\r\n`);
 
         proxyResponsePromise.then((statusCode) => {
-            this.forwardRequest(statusCode === 200 && tlsSocket);
+            this.forwardRequest({ socket: statusCode === 200 && tlsSocket, path: requestUrl.pathname });
         });
     }
 
@@ -95,7 +96,7 @@ export default class HandlerForward extends HandlerBase {
         });
     }
 
-    forwardRequest(socket) {
+    forwardRequest({ socket, path }) {
         const reqOpts = this.trgParsed;
         reqOpts.method = this.srcRequest.method;
         reqOpts.headers = {};
@@ -181,7 +182,7 @@ export default class HandlerForward extends HandlerBase {
             // HTTP requests to proxy contain the full URL in path, for example:
             // "GET http://www.example.com HTTP/1.1\r\n"
             // So we need to replicate it here
-            reqOpts.path = this.srcRequest.url;
+            reqOpts.path = path;
 
             // maybeAddProxyAuthorizationHeader(this.upstreamProxyUrlParsed, reqOpts.headers);
 
