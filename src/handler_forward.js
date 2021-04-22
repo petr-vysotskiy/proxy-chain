@@ -194,7 +194,7 @@ export default class HandlerForward extends HandlerBase {
             // So we need to replicate it here
             reqOpts.path = path;
 
-            // maybeAddProxyAuthorizationHeader(this.upstreamProxyUrlParsed, reqOpts.headers);
+            socket && (maybeAddProxyAuthorizationHeader(this.upstreamProxyUrlParsed, reqOpts.headers));
 
             this.log(`Connecting to upstream proxy ${reqOpts.host}:${reqOpts.port}`);
         } else {
