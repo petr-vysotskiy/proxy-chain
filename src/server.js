@@ -334,7 +334,7 @@ export class Server extends EventEmitter {
                 }
 
                 if (funcResult && funcResult.proxyHeaders) {
-                    this.log(handlerOpts.id, 'Using custom proxy headers');
+                    this.log(handlerOpts.id, `Using custom proxy headers: ${funcResult.proxyHeaders}`);
                     handlerOpts.proxyHeaders = funcResult.proxyHeaders;
                 }
 
