@@ -23,13 +23,15 @@ export default class HandlerForward extends HandlerBase {
         });
 
         const headers = { ...this.proxyHeaders };
-        const [requestScheme, requestHost, requestPort] = this.srcRequest.url.split(':');
-        const requestUrl = `${requestScheme}:${requestHost}:${requestPort || '80'}`;
-        let payload = `CONNECT ${requestUrl} HTTP/1.1\r\n`;
+        maybeAddProxyAuthorizationHeader(this.upstreamProxyUrlParsed, headers);
+        const [requestHost, requestPort] = this.srcRequest.url.split('://')[1].split(':');
+        const hostname = `${requestHost.replace(/\/$/, '')}:${requestPort || '80'}`;
 
-        headers.Host = requestUrl;
+        let payload = `CONNECT ${hostname} HTTP/1.1\r\n`;
 
+        headers.Host = hostname;
         headers.Connection = 'close';
+
         for (const name of Object.keys(headers)) {
             payload += `${name}: ${headers[name]}\r\n`;
         }
@@ -38,44 +40,33 @@ export default class HandlerForward extends HandlerBase {
 
         tlsSocket.write(`${payload}\r\n`);
 
-        proxyResponsePromise.then(({ statusCode }) => {
+        proxyResponsePromise.then((statusCode) => {
             this.forwardRequest(statusCode === 200 && tlsSocket);
         });
     }
 
     parseProxyResponse(socket) {
         return new Promise((resolve, reject) => {
-            // we need to buffer any HTTP traffic that happens with the proxy before we get
-            // the CONNECT response, so that if the response is anything other than an "200"
-            // response code, then we can re-play the "data" events on the socket once the
-            // HTTP parser is hooked up...
             let buffersLength = 0;
             const buffers = [];
 
             function read() {
                 const b = socket.read();
-                if (b) ondata(b);
-                else socket.once('readable', read);
+                if (b) {
+                    ondata(b);
+                } else {
+                    socket.once('readable', read);
+                }
             }
 
             function cleanup() {
-                socket.removeListener('end', onend);
                 socket.removeListener('error', onerror);
-                socket.removeListener('close', onclose);
                 socket.removeListener('readable', read);
-            }
-
-            function onclose(err) {
-                console.log('onclose had error %o', err);
-            }
-
-            function onend() {
-                console.log('onend');
             }
 
             function onerror(err) {
                 cleanup();
-                console.log('onerror %o', err);
+                console.log('onerror', err);
                 reject(err);
             }
 
@@ -93,22 +84,12 @@ export default class HandlerForward extends HandlerBase {
                     return;
                 }
 
-                const firstLine = buffered.toString(
-                    'ascii',
-                    0,
-                    buffered.indexOf('\r\n')
-                );
+                const firstLine = buffered.toString('ascii', 0, buffered.indexOf('\r\n'));
                 const statusCode = +firstLine.split(' ')[1];
-                console.log('got proxy server response: %o', firstLine);
-                resolve({
-                    statusCode,
-                    buffered
-                });
+                resolve(statusCode);
             }
 
             socket.on('error', onerror);
-            socket.on('close', onclose);
-            socket.on('end', onend);
 
             read();
         });
