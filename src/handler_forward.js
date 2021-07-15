@@ -48,7 +48,7 @@ export default class HandlerForward extends HandlerBase {
         proxyResponsePromise.then((statusCode) => {
             this.forwardRequest({
                 socket: statusCode === 200 && tlsSocket,
-                path: requestUrl.pathname
+                path: requestUrl.path
             });
         });
     }
