@@ -267,7 +267,12 @@ export class Server extends EventEmitter {
                 handlerOpts.trgParsed.port = handlerOpts.trgParsed.port || DEFAULT_TARGET_PORT;
 
                 // Authenticate the request using a user function (if provided)
-                if (!this.prepareRequestFunction) return { requestAuthentication: false, upstreamProxyUrlParsed: null };
+                if (!this.prepareRequestFunction) {
+                    return {
+                        requestAuthentication: false,
+                        upstreamProxyUrlParsed: null
+                    };
+                }
 
                 // Pause the socket so that no data is lost
                 socket.pause();
@@ -370,6 +375,12 @@ export class Server extends EventEmitter {
             });
         });
 
+        handler.once('connectionStarted', () => {
+            this.emit('connectionStarted', {
+                connectionId: handler.id
+            });
+        });
+
         handler.run();
     }
 
@@ -387,7 +398,10 @@ export class Server extends EventEmitter {
         } else {
             this.log(handlerId, `Request failed with unknown error: ${err.stack || err}`);
             this.sendResponse(request.socket, 500, null, 'Internal error in proxy server');
-            this.emit('requestFailed', { error: err, request });
+            this.emit('requestFailed', {
+                error: err,
+                request
+            });
         }
 
         // Emit 'connectionClosed' event if request failed and connection was already reported
@@ -395,7 +409,10 @@ export class Server extends EventEmitter {
             this.log(handlerId, 'Closed because request failed with error');
             this.emit('connectionClosed', {
                 connectionId: handlerOpts.id,
-                stats: { srcTxBytes: 0, srcRxBytes: 0 },
+                stats: {
+                    srcTxBytes: 0,
+                    srcRxBytes: 0
+                },
             });
         }
     }
@@ -532,7 +549,8 @@ export class Server extends EventEmitter {
         if (this.server) {
             const { server } = this;
             this.server = null;
-            const promise = util.promisify(server.close).bind(server)();
+            const promise = util.promisify(server.close)
+                .bind(server)();
             return nodeify(promise, callback);
         }
     }
