@@ -1,4 +1,5 @@
 import http from 'http';
+import https from 'https';
 import tls from 'tls';
 import {
     isHopByHopHeader, isInvalidHeader, addHeader, maybeAddProxyAuthorizationHeader,
@@ -33,12 +34,10 @@ export default class HandlerForward extends HandlerBase {
         const headers = { ...this.proxyHeaders };
         maybeAddProxyAuthorizationHeader(this.upstreamProxyUrlParsed, headers);
         const requestUrl = new URL(this.srcRequest.url);
-        const hostname = `${requestUrl.hostname}:${requestUrl.port || '80'}`;
-
-        let payload = `CONNECT ${hostname} HTTP/1.1\r\n`;
-
-        headers.Host = hostname;
+        headers.Host = `${requestUrl.hostname}:${requestUrl.port || '80'}`;
         headers.Connection = 'close';
+
+        let payload = '';
 
         for (const name of Object.keys(headers)) {
             payload += `${name}: ${headers[name]}\r\n`;
@@ -106,15 +105,14 @@ export default class HandlerForward extends HandlerBase {
         });
     }
 
-    forwardRequest({
-        socket,
-        path = this.srcRequest.url
-    }) {
+    forwardRequest({ socket, path }) {
         const reqOpts = this.trgParsed;
         reqOpts.method = this.srcRequest.method;
         reqOpts.headers = {};
         /* If we have created a socket, we should use it :) */
-        socket && (reqOpts.createConnection = () => socket);
+        if (socket) {
+            reqOpts.createConnection = () => socket;
+        }
 
         // TODO:
         //  - We should probably use a raw HTTP message via socket instead of http.request(),
@@ -196,7 +194,7 @@ export default class HandlerForward extends HandlerBase {
             // HTTP requests to proxy contain the full URL in path, for example:
             // "GET http://www.example.com HTTP/1.1\r\n"
             // So we need to replicate it here
-            reqOpts.path = path;
+            reqOpts.path = path || this.srcRequest.url;
 
             if (!socket) {
                 (maybeAddProxyAuthorizationHeader(this.upstreamProxyUrlParsed, reqOpts.headers));
@@ -209,7 +207,8 @@ export default class HandlerForward extends HandlerBase {
 
         // console.dir(requestOptions);
 
-        this.trgRequest = http.request(reqOpts);
+        const requestFn = reqOpts.protocol === 'https:' ? https.request : http.request;
+        this.trgRequest = requestFn(reqOpts);
         this.trgRequest.on('socket', this.onTrgSocket);
         this.trgRequest.on('response', this.onTrgResponse);
         this.trgRequest.on('error', this.onTrgError);
