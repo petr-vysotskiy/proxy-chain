@@ -35,6 +35,7 @@ export type ConnectionStats = {
 };
 
 type HandlerOpts = {
+    proxyHeaders: any;
     server: Server;
     id: number;
     srcRequest: http.IncomingMessage;
@@ -288,6 +289,7 @@ export class Server extends EventEmitter {
      */
     getHandlerOpts(request: http.IncomingMessage): HandlerOpts {
         const handlerOpts: HandlerOpts = {
+            proxyHeaders: undefined,
             server: this,
             id: ++this.lastHandlerId,
             srcRequest: request,
@@ -296,7 +298,7 @@ export class Server extends EventEmitter {
             upstreamProxyUrlParsed: null,
             isHttp: false,
             srcResponse: null,
-            customResponseFunction: null,
+            customResponseFunction: null
         };
 
         this.log((request.socket as Socket).proxyChainId, `!!! Handling ${request.method} ${request.url} HTTP/${request.httpVersion}`);
@@ -428,6 +430,9 @@ export class Server extends EventEmitter {
 
         if (handlerOpts.upstreamProxyUrlParsed) {
             this.log(proxyChainId, `Using upstream proxy ${redactUrl(handlerOpts.upstreamProxyUrlParsed)}`);
+        }
+        if (handlerOpts.proxyHeaders) {
+            this.log(proxyChainId, `Using custom proxy headers ${handlerOpts.proxyHeaders}`);
         }
 
         return handlerOpts;

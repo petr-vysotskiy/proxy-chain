@@ -27,6 +27,7 @@ interface Options {
 export interface HandlerOpts {
     upstreamProxyUrlParsed: URL;
     localAddress?: string;
+    proxyHeaders: any
 }
 
 interface ChainOpts {
@@ -68,6 +69,7 @@ export const chain = (
         headers: [
             'host',
             request.url!,
+            ...(handlerOpts.proxyHeaders || {})
         ],
         localAddress: handlerOpts.localAddress,
     };
